@@ -1,10 +1,15 @@
-import 'dotenv/config'
-import Fastify from 'fastify'
-import { submitForReview } from './submission.js'
+import 'dotenv/config';
+import Fastify from 'fastify';
+import { submitForReview } from './submission.js';
+import { getCityInfo } from './getCityInfo.js';
+import { postCityRecipe } from './postCityRecipe.js';
+import { deleteCityRecipe } from './deleteCityRecipe.js';
 
-const fastify = Fastify({
-  logger: true,
-})
+const fastify = Fastify({ logger: true });
+
+fastify.get('/cities/:cityId/infos', getCityInfo);
+fastify.post('/cities/:cityId/recipes', postCityRecipe);
+fastify.delete('/cities/:cityId/recipes/:recipeId', deleteCityRecipe);
 
 fastify.listen(
   {
@@ -13,14 +18,15 @@ fastify.listen(
   },
   function (err) {
     if (err) {
-      fastify.log.error(err)
-      process.exit(1)
+      fastify.log.error(err);
+      process.exit(1);
     }
 
-    //////////////////////////////////////////////////////////////////////
-    // Don't delete this line, it is used to submit your API for review //
-    // everytime your start your server.                                //
-    //////////////////////////////////////////////////////////////////////
-    submitForReview(fastify)
+    console.log('✅ Serveur démarré sur http://localhost:' + process.env.PORT);
+
+    ////////////////////////////////////////////////////////////////////////
+    // NE PAS SUPPRIMER : Soumission automatique de l'API pour l'examen  //
+    ////////////////////////////////////////////////////////////////////////
+    submitForReview(fastify);
   }
-)
+);

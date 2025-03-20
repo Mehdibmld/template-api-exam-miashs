@@ -1,47 +1,43 @@
 import fetch from "node-fetch";
 
 const CITY_API_URL = "https://api-ugi2pflmha-ew.a.run.app/cities";
-const WEATHER_API_URL = "https://api-ugi2pflmha-ew.a.run.app/weather";
+const WEATHER_API_URL = "https://api-ugi2pflmha-ew.a.run.app/weather-predictions";
 
 export const getCityInfo = async (request, reply) => {
   try {
     const { cityId } = request.params;
     if (!cityId) return reply.status(400).send({ error: "ID de la ville requis." });
 
-    // ✅ Vérification que la ville existe dans City API
-    const cityListResponse = await fetch(`${CITY_API_URL}?apiKey=${process.env.API_KEY}`);
-    if (!cityListResponse.ok) return reply.status(500).send({ error: "Impossible de récupérer la liste des villes." });
-
-    const cityList = await cityListResponse.json();
-    const cityExists = cityList.find(city => city.id === cityId);
-
-    if (!cityExists) return reply.status(404).send({ error: "Ville non trouvée dans City API." });
-
-    // ✅ Récupération des infos de la ville
-    const cityResponse = await fetch(`${CITY_API_URL}/${cityId}?apiKey=${process.env.API_KEY}`);
+    // 🔥 Nouvelle URL pour récupérer les infos d'une ville
+    const cityResponse = await fetch(`${CITY_API_URL}/${cityId}/insights?apiKey=${process.env.API_KEY}`);
     if (!cityResponse.ok) return reply.status(404).send({ error: "Ville non trouvée." });
 
     const cityData = await cityResponse.json();
 
-    // ✅ Récupération des prévisions météo
-    const weatherResponse = await fetch(`${WEATHER_API_URL}/${cityId}?apiKey=${process.env.API_KEY}`);
-    if (!weatherResponse.ok) return reply.status(500).send({ error: "Problème avec Weather API." });
+    // 🔥 Nouvelle URL pour récupérer les prévisions météo
+    const weatherResponse = await fetch(`${WEATHER_API_URL}?cityId=${cityId}&apiKey=${process.env.API_KEY}`);
+    if (!weatherResponse.ok) return reply.status(500).send({ error: "Problème météo." });
 
     const weatherData = await weatherResponse.json();
 
-    // ✅ Réponse correcte
+    // On s'assure que les prédictions sont bien récupérées
+    const predictions = weatherData.find(w => w.cityId === cityId)?.predictions || [];
+
+    if (predictions.length < 2) {
+      return reply.status(500).send({ error: "Données météo incomplètes." });
+    }
+
     reply.send({
-      coordinates: [cityData.lat, cityData.lon],
+      coordinates: [cityData.coordinates.latitude, cityData.coordinates.longitude],
       population: cityData.population,
       knownFor: cityData.knownFor,
       weatherPredictions: [
-        { when: "today", min: weatherData.today.min, max: weatherData.today.max },
-        { when: "tomorrow", min: weatherData.tomorrow.min, max: weatherData.tomorrow.max }
+        { when: "today", min: predictions[0].min, max: predictions[0].max },
+        { when: "tomorrow", min: predictions[1].min, max: predictions[1].max }
       ],
-      recipes: cityData.recipes || []
+      recipes: []
     });
   } catch (error) {
-    console.error("❌ Erreur serveur :", error);
-    reply.status(500).send({ error: "Erreur serveur." });
+    reply.status(500).send({ error: "Erreur serveur.", details: error.message });
   }
 };

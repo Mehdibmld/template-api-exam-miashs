@@ -7,10 +7,11 @@ export const deleteCityRecipe = async (request, reply) => {
       const recipeIndex = recipesDB[cityId].findIndex(r => r.id == recipeId);
       if (recipeIndex === -1) return reply.status(404).send({ error: "Recette non trouvée." });
   
+      // Supprimer la recette
       recipesDB[cityId].splice(recipeIndex, 1);
       reply.status(204).send();
     } catch (error) {
-      reply.status(500).send({ error: "Erreur serveur." });
+      reply.status(500).send({ error: "Erreur serveur.", details: error.message });
     }
   };
   

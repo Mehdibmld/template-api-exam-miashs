@@ -1,5 +1,6 @@
 import express from "express";
-import { getCityInfo, addRecipe, deleteRecipe } from "./src/controllers.js";
+import { getCityInfo, addRecipe } from "./controllers.js";
+import { deleteRecipe } from "./delete.js";
 
 const router = express.Router();
 
